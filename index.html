@@ -612,6 +612,9 @@ boot();
   let ready=false, applyingRemote=false, dref=null, unsub=null, pushT=null;
   function loadCfg(){try{return JSON.parse(localStorage.getItem(SK))||{};}catch(e){return {};}}
   function saveCfg(c){localStorage.setItem(SK,JSON.stringify(c));}
+  function parseCfg(t){t=String(t||'');var a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<0)throw new Error('sin objeto');t=t.slice(a,b+1);
+    try{return JSON.parse(t);}catch(e){}
+    var j=t.replace(/([{,]\s*)([A-Za-z_$][\w$]*)\s*:/g,'$1"$2":').replace(/,\s*}/g,'}');return JSON.parse(j);}
   function status(msg,ok){const el=document.getElementById('syncStatus');if(el){el.innerHTML=msg;el.style.color=ok?'var(--good)':'var(--muted)';}}
   function fillUI(){const c=loadCfg();const code=document.getElementById('syncCode');const cfg=document.getElementById('syncCfg');
     if(code&&!code.value)code.value=c.code||'';if(cfg&&!cfg.value)cfg.value=c.cfg?JSON.stringify(c.cfg,null,2):'';
@@ -644,7 +647,7 @@ boot();
     if(!e.target)return;
     if(e.target.id==='syncConnect'){
       const code=(document.getElementById('syncCode').value||'').trim();
-      let cfg;try{cfg=JSON.parse(document.getElementById('syncCfg').value);}catch(err){status('La config no es JSON válido — pégalo completo entre llaves { }.',false);return;}
+      let cfg;try{cfg=parseCfg(document.getElementById('syncCfg').value);}catch(err){status('No pude leer la config. Pega el objeto firebaseConfig completo, con sus llaves { }.',false);return;}
       if(!code){status('Pon un código de familia.',false);return;}
       saveCfg({enabled:true,code:code,cfg:cfg});connect();
       const f=document.getElementById('syncFlash');if(f){f.classList.add('show');setTimeout(()=>f.classList.remove('show'),1400);}
