@@ -301,6 +301,12 @@
       <div class="card" style="margin-top:16px"><h2 class="section">📧 Correos para autoevaluación</h2>
         <label class="fld"><span>Correo de papá</span><input type="text" id="cfg_mail_papa"></label>
         <label class="fld"><span>Correo de mamá</span><input type="text" id="cfg_mail_mama"></label></div>
+      <div class="card" style="margin-top:16px"><h2 class="section">☁️ Sincronización entre dispositivos</h2>
+        <p class="help" style="margin-bottom:8px">Opcional. Conecta todos los celulares con el mismo <b>código de familia</b> para compartir notas y evaluaciones en tiempo real. Requiere pegar la config de Firebase (gratis, ~5 min de setup). Sin esto, la app funciona pero cada equipo guarda su propia data.</p>
+        <label class="fld"><span>Código de familia (secreto compartido — invéntalo difícil)</span><input type="text" id="syncCode" placeholder="ej: salmon-4f9c2ax7"></label>
+        <label class="fld"><span>Config de Firebase (pega el objeto firebaseConfig)</span><textarea id="syncCfg" rows="6" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:11px 13px;font-family:var(--mono);font-size:.78rem" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "appId": "..." }'></textarea></label>
+        <div class="btn-row"><button class="btn good" id="syncConnect">☁️ Guardar y conectar</button><button class="btn ghost" id="syncOff">Desconectar</button><span class="save-flash" id="syncFlash">✓ Guardado</span></div>
+        <div id="syncStatus" class="help" style="margin-top:8px"></div></div>
       <div class="card" style="margin-top:16px"><h2 class="section">Chicos</h2><div id="cfgKids"></div></div>
       <div class="btn-row"><button class="btn good" id="cfgSave">💾 Guardar ajustes</button><button class="btn ghost" id="cfgRestore">Restaurar por defecto</button><span class="save-flash" id="cfgFlash">✓ Guardado</span></div>
     </div>
@@ -350,7 +356,7 @@ let subState={grades:{},evidence:'',bim:'II',kind:'Midterm',pen:[],pos:[]};
 
 function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.kids)return mig(r);}catch(e){}return structuredClone(DEFAULTS);}
 function mig(r){for(const k in DEFAULTS)if(!(k in r))r[k]=structuredClone(DEFAULTS[k]);if(!r.emails)r.emails={papa:'',mama:''};if(!r._pinset){r.pin='cambiar123';r._pinset=true;}r.kids.forEach(k=>{k.grades=k.grades||{};if(!k.courses)k.courses=[...r.courses];if(k.xp==null)k.xp=0;if(k.pending===undefined)k.pending=null;if(!k.gradesPeriod)k.gradesPeriod=null;});return r;}
-function persist(){localStorage.setItem(KEY,JSON.stringify(S));}
+function persist(){localStorage.setItem(KEY,JSON.stringify(S));if(typeof cloudPush==='function')cloudPush();}
 function kidById(id){return S.kids.find(k=>k.id===id);}
 function kid(){return kidById(currentKid);}
 function kidGrades(){return kid().grades||{};}
@@ -595,6 +601,58 @@ function iv(s){return parseInt($(s).value||0);}
 /* ===== BOOT ===== */
 function boot(){renderKidSelector();simState.grades={...kidGrades()};simState.pen=[];simState.pos=[];subState.grades={...(kid().pending||kidGrades())};subState.pen=[];subState.pos=[];updateLockBtn();renderHoy();renderSubir();renderSim();}
 boot();
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===== SYNC opcional (Firebase Firestore). Aislado: si falla, la app sigue con localStorage. ===== */
+(function(){
+  const SK='bancoTiempo.sync';
+  let ready=false, applyingRemote=false, dref=null, unsub=null, pushT=null;
+  function loadCfg(){try{return JSON.parse(localStorage.getItem(SK))||{};}catch(e){return {};}}
+  function saveCfg(c){localStorage.setItem(SK,JSON.stringify(c));}
+  function status(msg,ok){const el=document.getElementById('syncStatus');if(el){el.innerHTML=msg;el.style.color=ok?'var(--good)':'var(--muted)';}}
+  function fillUI(){const c=loadCfg();const code=document.getElementById('syncCode');const cfg=document.getElementById('syncCfg');
+    if(code&&!code.value)code.value=c.code||'';if(cfg&&!cfg.value)cfg.value=c.cfg?JSON.stringify(c.cfg,null,2):'';
+    status(c.enabled?(ready?'✓ Conectado (código: '+c.code+'). Cambios se comparten en vivo.':'Configurado · conectando…'):'Desconectado (cada equipo guarda su propia data).',c.enabled&&ready);}
+  function safeRender(){try{if(typeof renderKidSelector==='function')renderKidSelector();if(typeof showTab==='function'&&typeof curTab==='function')showTab(curTab());}catch(e){}}
+  window.cloudPush=function(){if(!ready||applyingRemote||!dref)return;clearTimeout(pushT);pushT=setTimeout(function(){
+    try{dref.set({state:JSON.parse(JSON.stringify(S)),t:Date.now()},{merge:true});}catch(e){}},700);};
+  function connect(){
+    const c=loadCfg();ready=false;
+    if(unsub){try{unsub();}catch(e){}unsub=null;}
+    if(!c.enabled||!c.cfg||!c.code){fillUI();return;}
+    if(typeof firebase==='undefined'){status('SDK de Firebase no cargó (¿sin internet?). La app sigue local.',false);return;}
+    try{
+      if(!firebase.apps.length)firebase.initializeApp(c.cfg);
+      firebase.auth().signInAnonymously().catch(function(){});
+      dref=firebase.firestore().collection('families').doc(c.code);
+      unsub=dref.onSnapshot(function(snap){
+        if(!snap.exists){window.cloudPush();return;}
+        const rs=snap.data().state;if(!rs)return;
+        if(JSON.stringify(rs)===JSON.stringify(S))return;
+        applyingRemote=true;
+        try{S=(typeof mig==='function')?mig(rs):rs;localStorage.setItem('bancoTiempo.v5',JSON.stringify(S));}catch(e){}
+        applyingRemote=false;safeRender();
+      },function(err){status('Error de conexión: '+(err&&err.code||err),false);ready=false;});
+      ready=true;status('✓ Conectado (código: '+c.code+')',true);
+      window.cloudPush();
+    }catch(e){status('Error al conectar: '+(e&&e.message||e),false);ready=false;}
+  }
+  document.addEventListener('click',function(e){
+    if(!e.target)return;
+    if(e.target.id==='syncConnect'){
+      const code=(document.getElementById('syncCode').value||'').trim();
+      let cfg;try{cfg=JSON.parse(document.getElementById('syncCfg').value);}catch(err){status('La config no es JSON válido — pégalo completo entre llaves { }.',false);return;}
+      if(!code){status('Pon un código de familia.',false);return;}
+      saveCfg({enabled:true,code:code,cfg:cfg});connect();
+      const f=document.getElementById('syncFlash');if(f){f.classList.add('show');setTimeout(()=>f.classList.remove('show'),1400);}
+    }
+    if(e.target.id==='syncOff'){const c=loadCfg();c.enabled=false;saveCfg(c);if(unsub){try{unsub();}catch(_){}}ready=false;dref=null;fillUI();}
+  });
+  setTimeout(function(){fillUI();connect();},400);
+})();
 </script>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});}
