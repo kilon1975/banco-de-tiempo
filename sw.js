@@ -1,4 +1,4 @@
-const CACHE = 'banco-tiempo-v2';
+const CACHE = 'banco-tiempo-v3';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'

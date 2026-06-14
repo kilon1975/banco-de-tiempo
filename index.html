@@ -130,6 +130,15 @@
   .modal .err{color:var(--bad);font-size:.8rem;font-weight:600;height:18px;margin-top:8px}
   .confetti{position:fixed;top:-12px;width:9px;height:15px;border-radius:2px;z-index:1100;pointer-events:none;animation:fall 1.9s ease-in forwards}
   @keyframes fall{to{transform:translateY(104vh) rotate(720deg);opacity:.15}}
+  .daychips{display:flex;gap:6px;flex-wrap:wrap}
+  .daychip{flex:1;min-width:58px;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:8px 5px;text-align:center;cursor:pointer;transition:.12s}
+  .daychip:hover{border-color:var(--accent)}
+  .daychip.sel{border-color:var(--accent);background:linear-gradient(140deg,var(--surface-2),#3a2c6e);box-shadow:var(--shadow)}
+  .daychip.today .dn{color:var(--accent2)}
+  .daychip.future{opacity:.45}
+  .daychip .dn{font-family:var(--disp);font-weight:600;font-size:.92rem}
+  .daychip .dd{font-size:.64rem;color:var(--muted)}
+  .daychip .dot{margin-top:2px;font-size:.72rem;height:14px;line-height:14px}
 </style>
 </head>
 <body>
@@ -143,7 +152,7 @@
     <button data-tab="hoy" class="active">🏠 Hoy</button>
     <button data-tab="subir">📤 Subir notas</button>
     <button data-tab="sim">🎮 Laboratorio</button>
-    <button data-tab="viernes">🔒 Evaluación viernes</button>
+    <button data-tab="viernes">🔒 Evaluación</button>
     <button data-tab="hist">📈 Historial</button>
     <button data-tab="ajustes">🔒 Ajustes</button>
   </nav>
@@ -232,35 +241,46 @@
     <div id="vLocked" class="card lockmsg"><div class="big">🔒</div><p>Zona de padres. Toca "Modo padres" e ingresa el PIN.</p></div>
     <div id="vContent" style="display:none">
       <div class="card" id="vApproveCard" style="display:none;margin-bottom:16px"><h2 class="section">📚 Notas pendientes de aprobación</h2><div id="vApprove"></div></div>
-      <p class="sub">📅 Evaluación semanal (viernes por la tarde) · <b>solo conducta</b>. Las notas ya definieron el tiempo base.</p>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <div><h2 class="section" id="vTitle">Semana —</h2><span class="sub" style="margin:0" id="vWeekState"></span></div>
           <div style="text-align:right"><div class="sub" style="margin:0">Tiempo por libreta</div>
             <div class="bignum small" style="-webkit-text-fill-color:initial;background:none;color:var(--coin)"><span id="vBaseline">0</span><span class="u">min</span></div></div>
         </div>
+        <p class="sub" style="margin:10px 0 0">📅 <b>Evaluación diaria</b>: marca la conducta de cada día. El <b>viernes antes de las 7:00 pm</b> haces el <b>cierre semanal</b>, que suma los días y fija el tiempo del finde.</p>
       </div>
-      <div class="grid c2" style="margin-top:16px">
-        <div class="card"><h2 class="section">😈 Conducta negativa (resta)</h2><div id="vPen"></div></div>
-        <div class="card"><h2 class="section">🌟 Conducta positiva</h2><p class="sub">Colaboración, extracurriculares, llamadas a familiares, buen trato… mantienen y pueden subir hasta 5 h.</p><div id="vPos"></div></div>
-      </div>
+
       <div class="card" style="margin-top:16px">
-        <h2 class="section">Decisión de la semana</h2>
-        <div id="vReward"></div>
+        <h2 class="section">🗓️ Evaluación del día</h2>
+        <div class="daychips" id="vDayChips"></div>
+        <p class="sub" id="vDayLabel" style="margin:12px 0 8px">—</p>
+        <div class="grid c2">
+          <div><h2 class="section" style="font-size:1rem">😈 Conducta negativa</h2><div id="vDayPen"></div></div>
+          <div><h2 class="section" style="font-size:1rem">🌟 Conducta positiva</h2><div id="vDayPos"></div></div>
+        </div>
+        <div class="btn-row"><button class="btn ghost" id="vDayClear">Limpiar este día</button><span class="save-flash" id="vDayFlash">✓ Guardado</span></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h2 class="section">🔒 Cierre semanal</h2>
+        <div id="vWindow" class="status none" style="margin-top:6px"></div>
+        <div class="breakdown" id="vAggBreak" style="justify-content:flex-start;margin-top:14px"></div>
+        <div id="vReward" style="margin-top:8px"></div>
         <div class="btn-row" style="margin-top:10px">
-          <button class="btn good" id="vKeep">✅ Mantener (<span id="vKeepN">0</span>)</button>
+          <button class="btn good" id="vKeep">✅ Solo libreta (<span id="vKeepN">0</span>)</button>
           <button class="btn ghost" id="vSuggest">Usar sugerido (<span id="vSuggestN">0</span>)</button>
         </div>
         <div style="margin-top:18px">
           <div style="display:flex;justify-content:space-between;align-items:baseline">
-            <span class="sub" style="margin:0">Tiempo final de la semana (lo decides tú)</span>
+            <span class="sub" style="margin:0">Tiempo final del finde (lo decides tú)</span>
             <span class="bignum small" style="-webkit-text-fill-color:initial;background:none;color:var(--good)"><span id="vFinal">0</span><span class="u">min</span></span>
           </div>
           <input type="range" id="vSlider" min="0" max="300" step="5" value="0">
           <div class="cap-note">0 ··· tope de la semana: <b id="vCap">120</b> min</div>
         </div>
         <div class="breakdown" id="vBreak" style="justify-content:flex-start"></div>
-        <div class="btn-row"><button class="btn big" id="vSave">💾 Guardar evaluación de la semana</button><span class="save-flash" id="vFlash">✓ Guardado</span></div>
+        <div class="btn-row"><button class="btn big" id="vClose">🔒 Cerrar la semana y fijar el finde</button><span class="save-flash" id="vFlash">✓ Cerrada</span></div>
+        <div id="vClosedBox"></div>
       </div>
     </div>
   </section>
@@ -307,6 +327,10 @@
         <label class="fld"><span>Config de Firebase (pega el objeto firebaseConfig)</span><textarea id="syncCfg" rows="6" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:11px 13px;font-family:var(--mono);font-size:.78rem" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "appId": "..." }'></textarea></label>
         <div class="btn-row"><button class="btn good" id="syncConnect">☁️ Guardar y conectar</button><button class="btn ghost" id="syncOff">Desconectar</button><span class="save-flash" id="syncFlash">✓ Guardado</span></div>
         <div id="syncStatus" class="help" style="margin-top:8px"></div></div>
+      <div class="card" style="margin-top:16px"><h2 class="section">💾 Copia de seguridad</h2>
+        <p class="help" style="margin-bottom:8px">Guarda toda la data (notas, evaluaciones diarias, semanas cerradas y ajustes) en un archivo, por si cambias de celular o limpias el navegador. <b>No</b> incluye la config de sincronización.</p>
+        <div class="btn-row"><button class="btn ghost" id="bkExport">⬇️ Descargar copia</button><button class="btn ghost" id="bkImportBtn">⬆️ Restaurar copia</button><input type="file" id="bkFile" accept="application/json,.json" style="display:none"><span class="save-flash" id="bkFlash">✓ Listo</span></div>
+        <div id="bkStatus" class="help" style="margin-top:8px"></div></div>
       <div class="card" style="margin-top:16px"><h2 class="section">Chicos</h2><div id="cfgKids"></div></div>
       <div class="btn-row"><button class="btn good" id="cfgSave">💾 Guardar ajustes</button><button class="btn ghost" id="cfgRestore">Restaurar por defecto</button><span class="save-flash" id="cfgFlash">✓ Guardado</span></div>
     </div>
@@ -347,15 +371,15 @@ const DEFAULTS={
   kids:[
     {id:'k1',name:'Lucía (14)',color:'#9A7BFF',courses:Object.keys(LUCIA_GRADES),grades:{...LUCIA_GRADES},pending:null,submitted:false,evidence:'',xp:0},
     {id:'k2',name:'Joaquín (12)',color:'#37E1A0',courses:Object.keys(JOAQUIN_GRADES),grades:{...JOAQUIN_GRADES},pending:null,submitted:false,evidence:'',xp:0}],
-  weekly:{}
+  weekly:{}, daily:{}
 };
 let S=load(); let currentKid=S.kids[0].id; let unlocked=false; let pinThen=null;
-let vState={pen:[],pos:[],override:null};
+let vState={override:null}; let vDay='';
 let simState={grades:{},pen:[],pos:[]};
 let subState={grades:{},evidence:'',bim:'II',kind:'Midterm',pen:[],pos:[]};
 
 function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.kids)return mig(r);}catch(e){}return structuredClone(DEFAULTS);}
-function mig(r){for(const k in DEFAULTS)if(!(k in r))r[k]=structuredClone(DEFAULTS[k]);if(!r.emails)r.emails={papa:'',mama:''};if(!r._pinset){r.pin='cambiar123';r._pinset=true;}r.kids.forEach(k=>{k.grades=k.grades||{};if(!k.courses)k.courses=[...r.courses];if(k.xp==null)k.xp=0;if(k.pending===undefined)k.pending=null;if(!k.gradesPeriod)k.gradesPeriod=null;});return r;}
+function mig(r){for(const k in DEFAULTS)if(!(k in r))r[k]=structuredClone(DEFAULTS[k]);if(!r.emails)r.emails={papa:'',mama:''};if(!r._pinset){r.pin='cambiar123';r._pinset=true;}if(!r.daily)r.daily={};r.kids.forEach(k=>{k.grades=k.grades||{};if(!k.courses)k.courses=[...r.courses];if(k.xp==null)k.xp=0;if(k.pending===undefined)k.pending=null;if(!k.gradesPeriod)k.gradesPeriod=null;});return r;}
 function persist(){localStorage.setItem(KEY,JSON.stringify(S));if(typeof cloudPush==='function')cloudPush();}
 function kidById(id){return S.kids.find(k=>k.id===id);}
 function kid(){return kidById(currentKid);}
@@ -366,6 +390,15 @@ function isWeekendToday(){const d=new Date().getDay();return d===0||d===6;}
 function isFridayToday(){return new Date().getDay()===5;}
 function weekId(date){const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));const wk=Math.ceil((((d-ys)/86400000)+1)/7);return d.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');}
 function curWeek(){return weekId(new Date());}
+const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DOWLONG=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+function ymd(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function parseYmd(s){const p=String(s).split('-').map(Number);return new Date(p[0],(p[1]||1)-1,p[2]||1,12,0,0);}
+function mondayOf(date){const d=new Date(date);const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);d.setHours(12,0,0,0);return d;}
+function weekDates(date){const m=mondayOf(date);const out=[];for(let i=0;i<7;i++){const x=new Date(m);x.setDate(m.getDate()+i);out.push(x);}return out;}
+function hhmm(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function fridayClose(){const d=new Date();return{isFriday:d.getDay()===5,beforeCutoff:d.getHours()<19,now:d};}
+function flash(sel){const f=$(sel);if(f){f.classList.add('show');setTimeout(()=>f.classList.remove('show'),1400);}}
 
 /* ===== MOTOR ===== */
 function gradeBonus(grades,courses){const v=[];let nA=0,nB=0,nC=0;
@@ -389,6 +422,19 @@ function weeklyCalc(grades,courses,pen,pos,override){
   const suggested=Math.max(0,Math.min(baseline+posPts+penPts,cap));
   const final=override!=null?Math.max(0,Math.min(override,cap)):suggested;
   return{baseline,penPts,posPts,capBonus,gb,normalCap,cap,suggested,final,rewardOn:final>normalCap,gateOK};}
+
+function dailyOf(kidId){return (S.daily&&S.daily[kidId])||{};}
+function ensureDaily(kidId,ds){if(!S.daily)S.daily={};if(!S.daily[kidId])S.daily[kidId]={};if(!S.daily[kidId][ds])S.daily[kidId][ds]={pen:[],pos:[]};return S.daily[kidId][ds];}
+function aggregateWeek(kidId,wk){const all=dailyOf(kidId);let penPts=0,posPts=0,capBonus=0,penCount=0,days=0;const penSet=new Set(),posSet=new Set(),capSet=new Set();
+  for(const ds in all){if(weekId(parseYmd(ds))!==wk)continue;const e=all[ds];if(!((e.pen||[]).length||(e.pos||[]).length))continue;days++;
+    for(const id of (e.pen||[])){const p=S.penalties.find(x=>x.id===id);if(p){penPts+=p.pts;penCount++;penSet.add(id);}}
+    for(const id of (e.pos||[])){const p=S.positives.find(x=>x.id===id);if(p){posPts+=p.pts;posSet.add(id);if(p.cap>0&&!capSet.has(id)){capBonus+=p.cap;capSet.add(id);}}}}
+  return{penPts,posPts,capBonus,penCount,days,penIds:[...penSet],posIds:[...posSet]};}
+function weeklyCalcAgg(grades,courses,agg,override){const base=gradeBaseline(grades,courses);const baseline=base.val;const gb=base.gb;
+  const penPts=agg.penPts,posPts=agg.posPts,capBonus=agg.capBonus;const normalCap=S.caps.weekend;const rewardMax=S.caps.weekendReward??300;
+  const gateOK=agg.penCount===0&&gb.nC===0&&capBonus>0;let cap=normalCap;if(gateOK)cap=Math.min(rewardMax,normalCap+capBonus);
+  const suggested=Math.max(0,Math.min(baseline+posPts+penPts,cap));const final=override!=null?Math.max(0,Math.min(override,cap)):suggested;
+  return{baseline,penPts,posPts,capBonus,gb,normalCap,cap,suggested,final,rewardOn:final>normalCap,gateOK,days:agg.days};}
 
 /* ===== GAMIFICACIÓN ===== */
 function weeksOf(id){return S.weekly[id]||{};}
@@ -469,18 +515,18 @@ function renderHoy(){const k=kid();$('#hoyGreet').textContent='¡Hola, '+k.name.
     countUp($('#hoyMin'),0);$('#hoyMascot').textContent='📵';$('#hoyDay').textContent='Día de colegio';
     $('#hoyCapNote').innerHTML='📵 <b>Día de colegio</b>: el tiempo de pantalla es <b>0</b>.';
     setBattery($('#hoyBat'),0,1);$('#hoyBreak').innerHTML='';$('#hoyReward').innerHTML='';
-    $('#hoyCoachTxt').innerHTML=isFridayToday()?'📅 Es <b>viernes</b>: papá/mamá deben hacer la <b>evaluación semanal</b> para definir el finde.':'Día de cole, a darle al estudio. ¡El finde se gana! 💪';
+    $('#hoyCoachTxt').innerHTML=isFridayToday()?'📅 Es <b>viernes</b>: papá/mamá deben hacer el <b>cierre semanal antes de las 7:00 pm</b> para fijar el finde.':'Día de cole, a darle al estudio. ¡El finde se gana! 💪';
     return;}
-  const wk=(S.weekly[currentKid]||{})[curWeek()];
-  let r,evaluated=!!wk;
-  if(wk)r=weeklyCalc(k.grades,k.courses,wk.pen,wk.pos,wk.final);
-  else r=weeklyCalc(k.grades,k.courses,[],[],null);
+  const wk=(S.weekly[currentKid]||{})[curWeek()];const agg=aggregateWeek(currentKid,curWeek());
+  let r,evaluated=!!(wk&&wk.closed);
+  if(evaluated)r=weeklyCalcAgg(k.grades,k.courses,agg,wk.final);
+  else r=weeklyCalcAgg(k.grades,k.courses,agg,null);
   countUp($('#hoyMin'),r.final);$('#hoyMascot').textContent=r.rewardOn?'🚀':moodEmoji(r.final/r.cap);
   $('#hoyDay').textContent='Fin de semana'+(evaluated?' · evaluado ✓':' · provisional');
   setBattery($('#hoyBat'),r.final,r.cap);renderBreakdown($('#hoyBreak'),r);
   $('#hoyCapNote').innerHTML=r.rewardOn?('🚀 <b style="color:var(--coin)">Modo Recompensa</b> · tope '+r.cap+' min'):('Tope de la semana: <b>'+r.cap+'</b> min');
-  $('#hoyReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 ¡Modo Recompensa!</div>':(evaluated?'':'<div class="status none">Provisional · falta la evaluación del viernes</div>');
-  $('#hoyCoachTxt').innerHTML=evaluated?coachWeekly(r):'Este es tu tiempo base por notas. Tus papás lo confirmarán el viernes según tu conducta.';}
+  $('#hoyReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 ¡Modo Recompensa!</div>':(evaluated?'':'<div class="status none">Provisional · falta el cierre del viernes</div>');
+  $('#hoyCoachTxt').innerHTML=evaluated?coachWeekly(r):'Este es tu tiempo provisional según tus notas y la conducta de la semana. Se fija con el cierre del viernes.';}
 
 /* ===== SUBIR NOTAS ===== */
 function renderSubir(){const k=kid();gradeGrid($('#subGrades'),subState.grades,k.courses,renderSubir);
@@ -533,28 +579,57 @@ function renderApprove(){const k=kid();const card=$('#vApproveCard');const ap=$(
   const ok=el('button','btn good','✅ Aprobar como oficial');ok.onclick=()=>{k.grades={...k.pending};k.gradesPeriod=k.pendingPeriod||k.gradesPeriod;k.pending=null;k.submitted=false;persist();confetti();renderViernes();renderHoy();};
   const no=el('button','btn ghost','Rechazar');no.onclick=()=>{k.pending=null;k.submitted=false;persist();renderApprove();};
   row.appendChild(ok);row.appendChild(no);ap.appendChild(row);}
-function renderViernes(){if(!unlocked)return;const k=kid();renderApprove();const wkk=curWeek();const rec=(S.weekly[currentKid]||{})[wkk];
-  vState=rec?{pen:[...rec.pen],pos:[...rec.pos],override:rec.final}:{pen:[],pos:[],override:null};
-  $('#vTitle').textContent='Semana '+wkk;
-  $('#vWeekState').textContent=rec?('Evaluada · '+(rec.friday||'')):'Sin evaluar todavía';
-  renderToggles($('#vPen'),S.penalties,vState.pen,'bad',vRecalc);renderToggles($('#vPos'),S.positives,vState.pos,'good',vRecalc);
-  vRecalc();}
-function vRecalc(){const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,vState.override);
-  $('#vBaseline').textContent=r.baseline;$('#vCap').textContent=r.cap;
-  $('#vKeepN').textContent=r.baseline;$('#vSuggestN').textContent=r.suggested;
-  const sl=$('#vSlider');sl.max=r.cap;sl.value=r.final;$('#vFinal').textContent=r.final;
-  $('#vReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 Conducta excepcional: puedes subir hasta '+r.cap+' min</div>':(r.gateOK?'':'<div class="status none">Para subir el tope: sin faltas, sin C y con conducta positiva destacada</div>');
-  renderBreakdown($('#vBreak'),r);}
-$('#vSlider').oninput=e=>{vState.override=parseInt(e.target.value);$('#vFinal').textContent=e.target.value;
-  const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,vState.override);renderBreakdown($('#vBreak'),r);
-  $('#vReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 Modo Recompensa</div>':(r.gateOK?'':'<div class="status none">Para subir el tope: sin faltas, sin C y con conducta positiva destacada</div>');};
-$('#vKeep').onclick=()=>{const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,null);vState.override=r.baseline;vRecalc();};
-$('#vSuggest').onclick=()=>{const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,null);vState.override=r.suggested;vRecalc();};
-$('#vSave').onclick=()=>{const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,vState.override);
+function renderViernes(){if(!unlocked)return;renderApprove();const k=kid();const wk=curWeek();const rec=(S.weekly[currentKid]||{})[wk];
+  $('#vTitle').textContent='Semana '+wk;
+  $('#vWeekState').textContent=(rec&&rec.closed)?('Cerrada · '+(rec.closedAt||rec.friday||'')):'Sin cerrar todavía';
+  $('#vBaseline').textContent=gradeBaseline(k.grades,k.courses).val;
+  if(!vDay||weekId(parseYmd(vDay))!==wk)vDay=ymd();
+  vState.override=(rec&&rec.closed)?rec.final:null;
+  renderDayChips();renderDayEval();renderWeeklyClose();}
+function renderDayChips(){const c=$('#vDayChips');if(!c)return;c.innerHTML='';const today=ymd();
+  weekDates(new Date()).forEach(d=>{const ds=ymd(d);const e=dailyOf(currentKid)[ds];const np=(e&&e.pen||[]).length,nq=(e&&e.pos||[]).length;
+    const dot=(np||nq)?(np&&nq?'🟡':np?'🔴':'🟢'):'·';
+    const ch=el('div','daychip'+(ds===vDay?' sel':'')+(ds===today?' today':'')+(ds>today?' future':''));
+    ch.innerHTML=`<div class="dn">${DOW[d.getDay()]}</div><div class="dd">${d.getDate()}/${d.getMonth()+1}</div><div class="dot">${dot}</div>`;
+    ch.onclick=()=>{vDay=ds;renderDayChips();renderDayEval();};c.appendChild(ch);});}
+function renderDayEval(){const ds=vDay;const e=ensureDaily(currentKid,ds);const d=parseYmd(ds);
+  $('#vDayLabel').innerHTML='Evaluando: <b>'+DOWLONG[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1)+'</b>'+(ds===ymd()?' (hoy)':'');
+  renderToggles($('#vDayPen'),S.penalties,e.pen,'bad',saveDay);
+  renderToggles($('#vDayPos'),S.positives,e.pos,'good',saveDay);}
+function saveDay(){persist();flash('#vDayFlash');renderDayChips();renderWeeklyClose();}
+$('#vDayClear').onclick=()=>{const e=ensureDaily(currentKid,vDay);e.pen=[];e.pos=[];persist();renderDayEval();renderDayChips();renderWeeklyClose();};
+function renderWeeklyClose(){const k=kid();const wk=curWeek();const rec=(S.weekly[currentKid]||{})[wk];const agg=aggregateWeek(currentKid,wk);
+  const fc=fridayClose();const win=$('#vWindow');
+  if(fc.isFriday&&fc.beforeCutoff){win.className='status ok';win.innerHTML='🟢 Ventana de cierre abierta · <b>viernes antes de las 7:00 pm</b>';}
+  else if(fc.isFriday){win.className='status wait';win.innerHTML='🟡 Es viernes pero ya pasaron las 7:00 pm · puedes cerrar igual (quedará como cierre tardío)';}
+  else{win.className='status none';win.innerHTML='El cierre oficial es el <b>viernes antes de las 7:00 pm</b>. Puedes adelantarlo si lo necesitas.';}
+  const r=weeklyCalcAgg(k.grades,k.courses,agg,vState.override);
+  const rr=weeklyCalcAgg(k.grades,k.courses,agg,null);
+  const ab=$('#vAggBreak');ab.innerHTML='';
+  ab.appendChild(el('div','chip base',`Libreta <span class="v">${r.baseline}</span>`));
+  ab.appendChild(el('div','chip',`📅 Días <span class="v">${agg.days}</span>`));
+  if(r.posPts)ab.appendChild(el('div','chip pos',`Conducta+ <span class="v">${fmt(r.posPts)}</span>`));
+  if(r.penPts)ab.appendChild(el('div','chip neg',`Conducta− <span class="v">${fmt(r.penPts)}</span>`));
+  if(r.gateOK)ab.appendChild(el('div','chip',`🚀 Tope ${r.cap}`));
+  $('#vKeepN').textContent=r.baseline;$('#vSuggestN').textContent=rr.suggested;
+  const sl=$('#vSlider');sl.max=r.cap;sl.value=r.final;$('#vFinal').textContent=r.final;$('#vCap').textContent=r.cap;
+  $('#vReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 Conducta excepcional: puede subir hasta '+r.cap+' min</div>':(r.gateOK?'':'<div class="status none">Para subir el tope (hasta 5 h): sin faltas, sin C y con conducta positiva destacada</div>');
+  renderBreakdown($('#vBreak'),r);
+  const cb=$('#vClosedBox');cb.innerHTML='';
+  if(rec&&rec.closed){const box=el('div','status ok');box.style.cssText='display:block;background:#0c3a28;color:var(--good);margin-top:12px';
+    box.innerHTML='✅ Semana cerrada el '+rec.closedAt+' · finde fijado en <b>'+rec.final+' min</b>'+(rec.onTime===false?' · ⏰ cierre tardío':'');cb.appendChild(box);
+    const ro=el('button','btn ghost','↺ Reabrir para editar');ro.style.marginTop='10px';
+    ro.onclick=()=>{if(confirm('¿Reabrir la semana? Podrás cambiar la evaluación y volver a cerrar.')){delete S.weekly[currentKid][wk];vState.override=null;persist();renderViernes();renderHoy();}};cb.appendChild(ro);
+    $('#vClose').textContent='🔒 Volver a cerrar la semana';}
+  else $('#vClose').textContent='🔒 Cerrar la semana y fijar el finde';}
+$('#vSlider').oninput=e=>{vState.override=parseInt(e.target.value);renderWeeklyClose();};
+$('#vKeep').onclick=()=>{vState.override=weeklyCalcAgg(kid().grades,kid().courses,aggregateWeek(currentKid,curWeek()),null).baseline;renderWeeklyClose();};
+$('#vSuggest').onclick=()=>{vState.override=weeklyCalcAgg(kid().grades,kid().courses,aggregateWeek(currentKid,curWeek()),null).suggested;renderWeeklyClose();};
+$('#vClose').onclick=()=>{const k=kid();const wk=curWeek();const agg=aggregateWeek(currentKid,wk);const r=weeklyCalcAgg(k.grades,k.courses,agg,vState.override);const fc=fridayClose();
   if(!S.weekly[currentKid])S.weekly[currentKid]={};
-  S.weekly[currentKid][curWeek()]={friday:todayStr(),pen:[...vState.pen],pos:[...vState.pos],final:r.final,baseline:r.baseline,cap:r.cap,rewardOn:r.rewardOn};
-  k.xp=(k.xp||0)+Math.round(r.final/10)+vState.pos.length*5+(vState.pen.length===0?15:0);
-  persist();$('#vFlash').classList.add('show');setTimeout(()=>$('#vFlash').classList.remove('show'),1400);confetti();renderHoy();};
+  S.weekly[currentKid][wk]={closed:true,closedAt:ymd()+' '+hhmm(fc.now),friday:ymd(),final:r.final,baseline:r.baseline,cap:r.cap,penPts:r.penPts,posPts:r.posPts,rewardOn:r.rewardOn,days:agg.days,penCount:agg.penCount,pen:agg.penIds,pos:agg.posIds,onTime:fc.isFriday&&fc.beforeCutoff};
+  k.xp=(k.xp||0)+Math.round(r.final/10)+(agg.posIds.length*5)+(agg.penCount===0?15:0);
+  persist();flash('#vFlash');confetti();renderViernes();renderHoy();};
 
 /* ===== HISTORIAL ===== */
 let chart;
@@ -598,6 +673,23 @@ $('#cfgSave').onclick=()=>{S.bases.weekend=iv('#cfg_base_we');S.caps.weekend=Mat
 $('#cfgRestore').onclick=()=>{if(confirm('¿Restaurar ajustes por defecto? Se conservan las semanas evaluadas.')){const w=S.weekly;S=structuredClone(DEFAULTS);S.weekly=w;persist();currentKid=S.kids[0].id;boot();renderSettings();}};
 function iv(s){return parseInt($(s).value||0);}
 
+/* ===== COPIA DE SEGURIDAD ===== */
+$('#bkExport').onclick=()=>{try{const payload={app:'banco-de-tiempo',v:5,exported:ymd(),state:S};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);
+  const a=el('a');a.href=url;a.download='banco-de-tiempo-'+ymd()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+  $('#bkStatus').innerHTML='✓ Copia descargada.';$('#bkStatus').style.color='var(--good)';flash('#bkFlash');
+}catch(e){$('#bkStatus').innerHTML='No se pudo descargar: '+(e&&e.message||e);$('#bkStatus').style.color='var(--bad)';}};
+$('#bkImportBtn').onclick=()=>$('#bkFile').click();
+$('#bkFile').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const obj=JSON.parse(rd.result);const st=(obj&&obj.state)?obj.state:obj;
+    if(!st||!Array.isArray(st.kids))throw new Error('archivo no válido');
+    const nW=Object.values(st.weekly||{}).reduce((a,o)=>a+Object.keys(o||{}).length,0);
+    if(!confirm('¿Restaurar esta copia? Reemplaza la data de ESTE equipo: '+st.kids.length+' chico(s) y '+nW+' semana(s) registradas. No se puede deshacer.'))return;
+    S=mig(st);if(!S.kids.some(k=>k.id===currentKid))currentKid=S.kids[0].id;persist();boot();renderSettings();
+    $('#bkStatus').innerHTML='✓ Copia restaurada.';$('#bkStatus').style.color='var(--good)';confetti();
+  }catch(err){$('#bkStatus').innerHTML='No pude leer la copia: '+(err&&err.message||err)+'. Usa un archivo exportado por la app.';$('#bkStatus').style.color='var(--bad)';}
+  finally{ev.target.value='';}};rd.readAsText(f);};
+
 /* ===== BOOT ===== */
 function boot(){renderKidSelector();simState.grades={...kidGrades()};simState.pen=[];simState.pos=[];subState.grades={...(kid().pending||kidGrades())};subState.pen=[];subState.pos=[];updateLockBtn();renderHoy();renderSubir();renderSim();}
 boot();
@@ -636,7 +728,7 @@ boot();
         const rs=snap.data().state;if(!rs)return;
         if(JSON.stringify(rs)===JSON.stringify(S))return;
         applyingRemote=true;
-        try{S=(typeof mig==='function')?mig(rs):rs;localStorage.setItem('bancoTiempo.v5',JSON.stringify(S));}catch(e){}
+        try{S=(typeof mig==='function')?mig(rs):rs;if(typeof currentKid!=='undefined'&&S.kids&&!S.kids.some(k=>k.id===currentKid))currentKid=S.kids[0].id;localStorage.setItem('bancoTiempo.v5',JSON.stringify(S));}catch(e){}
         applyingRemote=false;safeRender();
       },function(err){status('Error de conexión: '+(err&&err.code||err),false);ready=false;});
       ready=true;status('✓ Conectado (código: '+c.code+')',true);
