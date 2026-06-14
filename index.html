@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Banco de Tiempo · ¡Gana tu pantalla!</title>
+<meta name="theme-color" content="#160F2E" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Banco de Tiempo" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="icon" type="image/png" href="icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{--bg:#160F2E;--surface:#241A47;--surface-2:#2F2356;--line:#43367a;--ink:#F3EEFF;--muted:#AFA4DA;
+    --coin:#FFC83D;--good:#37E1A0;--bad:#FF6B8A;--accent:#9A7BFF;--accent2:#39D3FF;
+    --r:20px;--r-sm:13px;--shadow:0 16px 40px -16px rgba(0,0,0,.65);
+    --mono:'JetBrains Mono',monospace;--disp:'Fredoka',sans-serif;--body:'Inter',sans-serif;}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:radial-gradient(900px 500px at 12% -8%,#9A7BFF22,transparent 60%),radial-gradient(900px 500px at 95% 0%,#39D3FF1c,transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;min-height:100vh;line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 16px 70px} a{color:var(--accent2)}
+  header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .logo{display:flex;align-items:center;gap:11px}
+  .logo .mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(140deg,var(--coin),#ff8f3c);box-shadow:0 8px 20px -6px #ffae3caa;font-size:24px;animation:bob 3s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-4px) rotate(-4deg)}}
+  .logo h1{font-family:var(--disp);font-weight:700;font-size:1.3rem;margin:0}
+  .logo small{display:block;color:var(--muted);font-size:.72rem;font-weight:500;margin-top:-2px}
+  .lockbtn{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-weight:700;font-size:.82rem;padding:8px 14px;border-radius:999px;cursor:pointer;font-family:var(--body);transition:.15s}
+  .lockbtn:hover{border-color:var(--accent)} .lockbtn.open{color:var(--good);border-color:var(--good)}
+  .kids{display:flex;gap:8px;flex-wrap:wrap}
+  .kid-pill{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);padding:6px 14px 6px 6px;border-radius:999px;cursor:pointer;transition:.15s;font-weight:600;color:var(--muted)}
+  .kid-pill:hover{border-color:var(--accent)}
+  .kid-pill .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);font-weight:600;color:#160F2E;font-size:.85rem}
+  .kid-pill.active{color:var(--ink);border-color:transparent;background:linear-gradient(140deg,var(--surface-2),#3a2c6e);box-shadow:var(--shadow)}
+  nav.tabs{display:flex;gap:4px;background:var(--surface);padding:5px;border-radius:16px;border:1px solid var(--line);margin:14px 0 22px;overflow:auto}
+  nav.tabs button{flex:1;min-width:max-content;border:0;background:transparent;color:var(--muted);font-family:var(--body);font-weight:600;font-size:.9rem;padding:10px 13px;border-radius:11px;cursor:pointer;transition:.15s;white-space:nowrap}
+  nav.tabs button:hover{color:var(--ink)}
+  nav.tabs button.active{background:linear-gradient(135deg,var(--accent),#7a5cff);color:#fff;box-shadow:0 8px 18px -8px var(--accent)}
+  .panel{display:none;animation:fade .25s ease} .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+  .card + .card{margin-top:16px}
+  .grid{display:grid;gap:16px}
+  @media(min-width:760px){.grid.c2{grid-template-columns:1fr 1fr}}
+  h2.section{font-family:var(--disp);font-weight:600;font-size:1.18rem;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+  .hero{background:radial-gradient(600px 300px at 100% 0,#9A7BFF26,transparent 60%),linear-gradient(160deg,#2a1f55,#1c1540);text-align:center;position:relative;overflow:hidden}
+  .greet{font-family:var(--disp);font-weight:600;font-size:1.05rem;color:var(--muted)}
+  .mascot{width:88px;height:88px;margin:6px auto 4px;border-radius:50%;display:grid;place-items:center;font-size:44px;background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--coin) 60%,#f59b1e);box-shadow:0 10px 26px -8px #ffbb3caa,inset 0 -6px 12px #d97f1c66,inset 0 4px 10px #fff7;animation:bob 2.6s ease-in-out infinite}
+  .bignum{font-family:var(--mono);font-weight:700;font-size:4rem;line-height:1;letter-spacing:-1px;background:linear-gradient(135deg,#fff,#ffe6a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bignum .u{font-size:1rem;color:var(--muted);font-family:var(--body);font-weight:600;margin-left:6px;-webkit-text-fill-color:var(--muted)}
+  .daylabel{display:inline-block;margin-top:6px;font-size:.78rem;font-weight:600;color:var(--ink);background:#ffffff18;padding:4px 14px;border-radius:999px}
+  .battery{margin:20px auto 8px;max-width:520px;height:34px;background:#00000035;border-radius:999px;position:relative;overflow:hidden;border:1px solid var(--line)}
+  .battery .fill{height:100%;border-radius:999px;width:0;transition:width .8s cubic-bezier(.34,1.4,.5,1);background:linear-gradient(90deg,var(--good),#7af0c5,var(--accent2));box-shadow:0 0 20px #37e1a077;background-size:200% 100%;animation:shine 2.4s linear infinite}
+  @keyframes shine{to{background-position:200% 0}}
+  .battery.full .fill{background:linear-gradient(90deg,var(--coin),#ffe08a,var(--coin))}
+  .battery .cap-mark{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--bad);border-radius:2px;left:calc(100% - 3px)}
+  .cap-note{font-size:.74rem;color:var(--muted);margin-top:2px} .cap-note b{color:var(--coin)}
+  .statrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .stat{background:#ffffff12;border:1px solid var(--line);border-radius:14px;padding:9px 14px;min-width:96px}
+  .stat .k{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .stat .v{font-family:var(--disp);font-weight:700;font-size:1.3rem}
+  .xpbar{height:9px;background:#00000035;border-radius:999px;overflow:hidden;margin-top:6px}
+  .xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;transition:width .6s}
+  .badges{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+  @media(max-width:560px){.badges{grid-template-columns:repeat(2,1fr)}}
+  .badge{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;opacity:.4;filter:grayscale(.8);transition:.2s}
+  .badge.on{opacity:1;filter:none;border-color:var(--coin);box-shadow:0 8px 18px -10px var(--coin)}
+  .badge .bi{font-size:1.7rem;line-height:1} .badge .bn{font-size:.72rem;font-weight:700;margin-top:4px}
+  .breakdown{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+  .chip{display:inline-flex;align-items:center;gap:7px;background:#ffffff12;border:1px solid var(--line);padding:7px 12px;border-radius:999px;font-size:.82rem;font-weight:600}
+  .chip .v{font-family:var(--mono);font-weight:700}
+  .chip.pos .v{color:var(--good)} .chip.neg .v{color:var(--bad)} .chip.base .v{color:var(--coin)}
+  .coach{display:flex;gap:11px;align-items:flex-start;background:#ffffff10;border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 15px;margin-top:16px;font-size:.92rem;text-align:left}
+  .coach .ico{font-size:1.5rem;line-height:1} .coach b{color:var(--coin)}
+  .subj-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .subj-row:last-child{border-bottom:0} .subj-row .name{flex:1;font-weight:600;font-size:.9rem}
+  .grade-grp{display:flex;gap:5px}
+  .grade-grp button{width:36px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font-family:var(--disp);font-weight:600;font-size:.92rem;cursor:pointer;transition:.12s}
+  .grade-grp button:hover{border-color:var(--accent);color:var(--ink);transform:translateY(-1px)}
+  .grade-grp button.sel[data-g="A"]{background:var(--good);color:#063a27;border-color:transparent}
+  .grade-grp button.sel[data-g="B"]{background:var(--coin);color:#3a2600;border-color:transparent}
+  .grade-grp button.sel[data-g="C"]{background:var(--bad);color:#3a0c16;border-color:transparent}
+  .grade-grp button.sel[data-g="-"]{background:var(--surface);color:var(--ink);border-color:var(--accent)}
+  .toggle{display:flex;align-items:center;gap:12px;padding:12px 13px;border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:9px;cursor:pointer;transition:.12s;background:var(--surface-2)}
+  .toggle:hover{border-color:var(--accent);transform:translateX(2px)} .toggle .lbl{flex:1;font-weight:600;font-size:.9rem}
+  .toggle .rk{font-size:.62rem;color:var(--coin);font-weight:700} .toggle .pts{font-family:var(--mono);font-weight:700;font-size:.85rem}
+  .toggle .pts.neg{color:var(--bad)} .toggle .pts.pos{color:var(--good)}
+  .toggle .box{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;font-size:.8rem;color:transparent;transition:.12s}
+  .toggle.on{border-color:var(--accent)} .toggle.on .box{color:#fff}
+  .toggle.on.bad .box{background:var(--bad);border-color:var(--bad)} .toggle.on.good .box{background:var(--good);border-color:var(--good)}
+  .btn{border:0;border-radius:13px;padding:13px 20px;font-family:var(--disp);font-weight:600;font-size:.98rem;cursor:pointer;transition:.15s;background:linear-gradient(135deg,var(--accent),#7a5cff);color:#fff;box-shadow:0 10px 22px -10px var(--accent)}
+  .btn:hover{filter:brightness(1.08);transform:translateY(-2px)}
+  .btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .btn.good{background:linear-gradient(135deg,var(--good),#2bbd86);color:#062a1c;box-shadow:0 10px 22px -10px var(--good)}
+  .btn.warn{background:linear-gradient(135deg,var(--bad),#e0577a);color:#fff;box-shadow:0 10px 22px -10px var(--bad)}
+  .btn.big{font-size:1.05rem;padding:14px 22px;width:100%}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  label.fld{display:block;margin-bottom:14px} label.fld span{display:block;font-size:.8rem;color:var(--muted);font-weight:600;margin-bottom:5px}
+  input[type=text],input[type=number],input[type=password]{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:11px 13px;font-family:var(--body);font-size:.92rem}
+  input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  input[type=file]{font-size:.82rem;color:var(--muted)}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .mini{display:flex;gap:8px;align-items:center;margin-bottom:8px} .mini input[type=text]{flex:1} .mini input[type=number]{width:78px}
+  .mini .rm{background:var(--surface-2);border:1px solid var(--line);color:var(--bad);border-radius:9px;width:38px;height:38px;cursor:pointer;font-size:1rem}
+  .help{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .save-flash{display:inline-block;color:var(--good);font-weight:700;font-size:.85rem;opacity:0;transition:.3s} .save-flash.show{opacity:1}
+  .foot{color:var(--muted);font-size:.76rem;text-align:center;margin-top:30px;line-height:1.6}
+  .seg{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:11px;width:max-content}
+  .seg button{border:0;background:transparent;color:var(--muted);font-weight:600;padding:7px 16px;border-radius:8px;cursor:pointer;font-family:var(--body)}
+  .seg button.active{background:var(--accent);color:#fff}
+  .gtag{font-family:var(--mono);font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:9px}
+  .gtag.A{background:#0c3a28;color:var(--good)} .gtag.B{background:#3a2c10;color:var(--coin)} .gtag.C{background:#3a121e;color:var(--bad)}
+  .gradesum{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .status{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.85rem;padding:8px 14px;border-radius:999px;margin-top:10px}
+  .status.wait{background:#3a2c10;color:var(--coin)} .status.ok{background:#0c3a28;color:var(--good)} .status.none{background:var(--surface-2);color:var(--muted)}
+  .lockmsg{text-align:center;padding:40px 20px;color:var(--muted)} .lockmsg .big{font-size:2.4rem}
+  .bignum.small{font-size:2.4rem}
+  .overlay{position:fixed;inset:0;background:#0b0820cc;backdrop-filter:blur(4px);display:none;place-items:center;z-index:1000;padding:20px}
+  .overlay.show{display:grid}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px;max-width:340px;width:100%;text-align:center;box-shadow:var(--shadow)}
+  .modal h3{font-family:var(--disp);margin:0 0 4px} .modal p{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+  .modal input{text-align:center;font-family:var(--mono);font-size:1.05rem;letter-spacing:2px}
+  .modal .err{color:var(--bad);font-size:.8rem;font-weight:600;height:18px;margin-top:8px}
+  .confetti{position:fixed;top:-12px;width:9px;height:15px;border-radius:2px;z-index:1100;pointer-events:none;animation:fall 1.9s ease-in forwards}
+  @keyframes fall{to{transform:translateY(104vh) rotate(720deg);opacity:.15}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><div class="mark">🪙</div><div><h1>Banco de Tiempo</h1><small>Cole = 0 · El finde se gana con buena conducta</small></div></div>
+    <button class="lockbtn" id="lockBtn">🔒 Modo padres</button>
+  </header>
+  <div class="kids" id="kidSelector"></div>
+  <nav class="tabs">
+    <button data-tab="hoy" class="active">🏠 Hoy</button>
+    <button data-tab="subir">📤 Subir notas</button>
+    <button data-tab="sim">🎮 Laboratorio</button>
+    <button data-tab="viernes">🔒 Evaluación viernes</button>
+    <button data-tab="hist">📈 Historial</button>
+    <button data-tab="ajustes">🔒 Ajustes</button>
+  </nav>
+
+  <!-- HOY -->
+  <section class="panel active" id="tab-hoy">
+    <div class="card hero">
+      <div class="greet" id="hoyGreet">—</div>
+      <div class="mascot" id="hoyMascot">🤩</div>
+      <div class="bignum"><span id="hoyMin">0</span><span class="u">min de pantalla</span></div>
+      <div class="daylabel" id="hoyDay">—</div>
+      <div id="hoyReward"></div>
+      <div class="battery" id="hoyBat"><div class="fill"></div><div class="cap-mark"></div></div>
+      <div class="cap-note" id="hoyCapNote">—</div>
+      <div class="statrow">
+        <div class="stat"><div class="k">Nivel</div><div class="v" id="hoyLevel">1</div><div class="xpbar"><i id="hoyXp" style="width:0%"></i></div></div>
+        <div class="stat"><div class="k">Semanas 🔥</div><div class="v" id="hoyStreak">0</div></div>
+        <div class="stat"><div class="k">Notas</div><div class="v" id="hoyGrade">–</div></div>
+      </div>
+      <div class="breakdown" id="hoyBreak"></div>
+      <div class="coach" id="hoyCoach"><div class="ico">🦉</div><div id="hoyCoachTxt"></div></div>
+    </div>
+    <div class="card"><h2 class="section">🏅 Tus logros</h2><div class="badges" id="hoyBadges"></div></div>
+  </section>
+
+  <!-- SUBIR NOTAS -->
+  <section class="panel" id="tab-subir">
+    <div class="card hero" style="padding-bottom:22px">
+      <div class="mascot">📤</div><h2 class="section" style="font-size:1.4rem">Mi autoevaluación</h2>
+      <p class="sub" style="margin-bottom:6px">Tus notas definen tu <b>tiempo base del finde</b>. <b>Súbelas cada vez que salgan</b> (Midterm o Finales) y envía tu autoevaluación a tus papás.</p>
+      <div class="bignum small"><span id="subMin">0</span><span class="u">min base del finde</span></div>
+      <div id="subStatus"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2 class="section">🗓️ Periodo de las notas</h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px">
+        <div class="seg" id="subBim"><button data-b="I">Bim I</button><button data-b="II" class="active">Bim II</button><button data-b="III">Bim III</button><button data-b="IV">Bim IV</button></div>
+        <div class="seg" id="subKind"><button data-k="Midterm" class="active">Midterm</button><button data-k="Final">Final</button></div>
+      </div>
+    </div>
+    <div class="grid c2" style="margin-top:16px">
+      <div class="card"><h2 class="section">📚 Tus calificaciones</h2><div id="subGrades"></div></div>
+      <div>
+        <div class="card"><h2 class="section">🌟 ¿Cómo me porté? (mi opinión)</h2><div id="subPos"></div></div>
+        <div class="card"><h2 class="section">😈 A mejorar</h2><div id="subPen"></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2 class="section">📧 Enviar mi autoevaluación por correo</h2>
+      <p class="sub">Se abre tu correo con todo listo. Elige a quién enviar:</p>
+      <div class="btn-row">
+        <button class="btn" id="subMailPapa">📧 A papá</button>
+        <button class="btn" id="subMailMama">📧 A mamá</button>
+        <button class="btn good" id="subMailBoth">📧 A ambos</button>
+      </div>
+      <h2 class="section" style="font-size:1rem;margin-top:18px">📎 Foto de la libreta (opcional)</h2>
+      <p class="sub">Para adjuntarla, agrégala manualmente en tu correo (el nombre se incluye en el mensaje).</p>
+      <input type="file" id="subFile" accept="image/*,application/pdf"><div id="subPreview" style="margin-top:10px"></div>
+      <div class="btn-row"><button class="btn ghost" id="subSend">💾 Guardar en la app (para aprobación)</button></div>
+    </div>
+  </section>
+
+  <!-- LABORATORIO -->
+  <section class="panel" id="tab-sim">
+    <div class="card hero">
+      <div class="mascot">🎮</div><h2 class="section" style="font-size:1.4rem">Laboratorio del tiempo</h2>
+      <p class="sub" style="margin-bottom:6px">Prueba notas y conducta de la semana y mira tu tiempo de finde. Nada oficial 😉</p>
+      <div class="bignum small"><span id="simMin">0</span><span class="u">min finde</span></div>
+      <div class="battery" id="simBat"><div class="fill"></div><div class="cap-mark"></div></div>
+      <div class="cap-note">Tope normal: 120 min · con buena conducta excepcional sube ¡hasta 5 h! 🚀 · Cole = 0</div>
+      <div class="breakdown" id="simBreak"></div>
+      <div class="coach"><div class="ico">🦉</div><div id="simCoach"></div></div>
+    </div>
+    <div class="grid c2" style="margin-top:16px">
+      <div class="card"><h2 class="section">📚 ¿Y si cambias tus notas?</h2><div id="simGrades"></div>
+        <button class="btn ghost" id="simResetGrades" style="margin-top:10px">↺ Volver a mis notas reales</button></div>
+      <div>
+        <div class="card"><h2 class="section">😈 Conducta negativa</h2><div id="simPen"></div></div>
+        <div class="card"><h2 class="section">🌟 Conducta positiva</h2><div id="simPos"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVALUACIÓN VIERNES -->
+  <section class="panel" id="tab-viernes">
+    <div id="vLocked" class="card lockmsg"><div class="big">🔒</div><p>Zona de padres. Toca "Modo padres" e ingresa el PIN.</p></div>
+    <div id="vContent" style="display:none">
+      <div class="card" id="vApproveCard" style="display:none;margin-bottom:16px"><h2 class="section">📚 Notas pendientes de aprobación</h2><div id="vApprove"></div></div>
+      <p class="sub">📅 Evaluación semanal (viernes por la tarde) · <b>solo conducta</b>. Las notas ya definieron el tiempo base.</p>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div><h2 class="section" id="vTitle">Semana —</h2><span class="sub" style="margin:0" id="vWeekState"></span></div>
+          <div style="text-align:right"><div class="sub" style="margin:0">Tiempo por libreta</div>
+            <div class="bignum small" style="-webkit-text-fill-color:initial;background:none;color:var(--coin)"><span id="vBaseline">0</span><span class="u">min</span></div></div>
+        </div>
+      </div>
+      <div class="grid c2" style="margin-top:16px">
+        <div class="card"><h2 class="section">😈 Conducta negativa (resta)</h2><div id="vPen"></div></div>
+        <div class="card"><h2 class="section">🌟 Conducta positiva</h2><p class="sub">Colaboración, extracurriculares, llamadas a familiares, buen trato… mantienen y pueden subir hasta 5 h.</p><div id="vPos"></div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h2 class="section">Decisión de la semana</h2>
+        <div id="vReward"></div>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn good" id="vKeep">✅ Mantener (<span id="vKeepN">0</span>)</button>
+          <button class="btn ghost" id="vSuggest">Usar sugerido (<span id="vSuggestN">0</span>)</button>
+        </div>
+        <div style="margin-top:18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span class="sub" style="margin:0">Tiempo final de la semana (lo decides tú)</span>
+            <span class="bignum small" style="-webkit-text-fill-color:initial;background:none;color:var(--good)"><span id="vFinal">0</span><span class="u">min</span></span>
+          </div>
+          <input type="range" id="vSlider" min="0" max="300" step="5" value="0">
+          <div class="cap-note">0 ··· tope de la semana: <b id="vCap">120</b> min</div>
+        </div>
+        <div class="breakdown" id="vBreak" style="justify-content:flex-start"></div>
+        <div class="btn-row"><button class="btn big" id="vSave">💾 Guardar evaluación de la semana</button><span class="save-flash" id="vFlash">✓ Guardado</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="panel" id="tab-hist">
+    <div class="card"><h2 class="section">📈 Últimas semanas</h2><p class="sub" id="histSub">Tiempo de finde asignado por semana</p><canvas id="histChart" height="120"></canvas></div>
+    <div class="card"><h2 class="section">Semanas evaluadas</h2><div id="histList"></div></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="panel" id="tab-ajustes">
+    <div id="ajLocked" class="card lockmsg"><div class="big">🔒</div><p>Zona de padres. Toca "Modo padres" e ingresa el PIN.</p></div>
+    <div id="ajContent" style="display:none">
+      <p class="sub">Días de colegio = 0. El finde: tope normal 120 min; con conducta excepcional sube hasta 300 (5 h).</p>
+      <div class="grid c2">
+        <div class="card"><h2 class="section">Tiempos y topes</h2>
+          <label class="fld"><span>Base del finde (se suma a las notas)</span><input type="number" id="cfg_base_we"></label>
+          <label class="fld"><span>Tope normal finde (máx 120)</span><input type="number" id="cfg_cap_we" max="120"></label>
+          <label class="fld"><span>Tope recompensa finde (máx 300)</span><input type="number" id="cfg_rcap_we" max="300"></label>
+          <p class="help">El tope recompensa (hasta 5 h) solo se habilita con conducta limpia, sin desaprobar y con conducta positiva destacada.</p></div>
+        <div class="card"><h2 class="section">Puntos por nota</h2>
+          <div class="grid c2">
+            <label class="fld"><span>A (sobresale)</span><input type="number" id="cfg_gA"></label>
+            <label class="fld"><span>B (cumple)</span><input type="number" id="cfg_gB"></label>
+            <label class="fld"><span>C (no cumple)</span><input type="number" id="cfg_gC"></label>
+            <label class="fld"><span>Clave de padres</span><input type="text" id="cfg_pin" maxlength="24"></label>
+          </div>
+          <span class="sub" style="margin:0">Combinar notas</span>
+          <div class="seg" id="cfg_mode" style="margin-top:6px"><button data-m="promedio">Promedio</button><button data-m="suma">Suma</button></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px"><h2 class="section" id="cfgCoursesTitle">Cursos</h2><p class="help" style="margin-bottom:8px">Cada hijo tiene sus propios cursos. Cambia de hijo arriba para editar los del otro.</p><div id="cfgCourses"></div><button class="btn ghost" id="addCourse" style="margin-top:8px">+ Curso</button></div>
+      <div class="grid c2" style="margin-top:16px">
+        <div class="card"><h2 class="section">😈 Conducta negativa (resta)</h2><div id="cfgPen"></div><button class="btn ghost" id="addPen" style="margin-top:6px">+ Ítem</button></div>
+        <div class="card"><h2 class="section">🌟 Conducta positiva</h2><p class="help" style="margin-bottom:8px">Formato: etiqueta · minutos · sube-tope (0 = no sube tope; &gt;0 ayuda a llegar a 5 h).</p><div id="cfgPos"></div><button class="btn ghost" id="addPos" style="margin-top:6px">+ Ítem</button></div>
+      </div>
+      <div class="card" style="margin-top:16px"><h2 class="section">📧 Correos para autoevaluación</h2>
+        <label class="fld"><span>Correo de papá</span><input type="text" id="cfg_mail_papa"></label>
+        <label class="fld"><span>Correo de mamá</span><input type="text" id="cfg_mail_mama"></label></div>
+      <div class="card" style="margin-top:16px"><h2 class="section">Chicos</h2><div id="cfgKids"></div></div>
+      <div class="btn-row"><button class="btn good" id="cfgSave">💾 Guardar ajustes</button><button class="btn ghost" id="cfgRestore">Restaurar por defecto</button><span class="save-flash" id="cfgFlash">✓ Guardado</span></div>
+    </div>
+  </section>
+
+  <p class="foot">Banco de Tiempo · 100% en tu navegador, sin servidores.<br>
+    Días de colegio = 0 min. El finde se asigna cada viernes según conducta, sobre la base que dan las calificaciones. Topes según guías de psicólogos (≈2 h finde); el premio por sobre-desempeño puede llegar a 5 h por decisión de los padres.</p>
+</div>
+
+<div class="overlay" id="pinOverlay"><div class="modal">
+  <div style="font-size:2rem">🔐</div><h3>Modo padres</h3><p>Ingresa la clave para evaluar, aprobar notas y ajustar.</p>
+  <input type="password" id="pinInput" maxlength="24" placeholder="Clave de papás"><div class="err" id="pinErr"></div>
+  <div class="btn-row" style="justify-content:center"><button class="btn" id="pinOk">Desbloquear</button><button class="btn ghost" id="pinCancel">Cancelar</button></div>
+</div></div>
+
+<script>
+/* ===== DATOS ===== */
+const KEY='bancoTiempo.v5';
+const LUCIA_GRADES={'Matemática':'A','Comunicación':'A','Diseño, Innovación y Tecnología':'A','Educación Física':'A','Français':'A','Música':'A','Pensamiento y Ciudadanía':'A','Physics':'A','Química':null,'World Geography':'A','World History':'B','Approaches to Learning':'A','Biology':'A','Ciencias Sociales':'A'};
+const JOAQUIN_GRADES={'Artes Visuales':'A','Biology':null,'Ciencias Sociales':'B','Comunicación':'B','Diseño, Innovación y Tecnología':'A','Drama':'A','Educación Física':'A','English':'A','Français':'A','Matemática':'A','Pensamiento y Ciudadanía':'A','Physics':'A','Química':'B','World Geography':'A','World History':'B'};
+const DEFAULTS={
+  bases:{weekend:80}, caps:{weekend:120,weekendReward:300},
+  gradePoints:{A:12,B:6,C:-18}, gradeMode:'promedio', pin:'cambiar123', courses:Object.keys(LUCIA_GRADES),
+  emails:{papa:'', mama:''},
+  penalties:[
+    {id:'respeto',label:'Falta de respeto',pts:-25},
+    {id:'conducta',label:'Mala conducta',pts:-25},
+    {id:'desorden',label:'Desorden en casa',pts:-15},
+    {id:'aseo',label:'Falta de aseo',pts:-15}],
+  positives:[
+    {id:'colab',label:'🏠 Colaboración en casa',pts:15,cap:0},
+    {id:'extra',label:'⚽ Actividades extracurriculares',pts:15,cap:0},
+    {id:'familia',label:'📞 Llamó a familiares (tíos/abuelos)',pts:10,cap:0},
+    {id:'hermanos',label:'🤝 Buen trato entre hermanos',pts:15,cap:40},
+    {id:'sinpeleas',label:'🕊️ Sin peleas en la semana',pts:15,cap:40},
+    {id:'papas',label:'👏 Buen comentario de los papás',pts:20,cap:60},
+    {id:'profes',label:'🎓 Buen comentario de profesores',pts:20,cap:60}],
+  kids:[
+    {id:'k1',name:'Lucía (14)',color:'#9A7BFF',courses:Object.keys(LUCIA_GRADES),grades:{...LUCIA_GRADES},pending:null,submitted:false,evidence:'',xp:0},
+    {id:'k2',name:'Joaquín (12)',color:'#37E1A0',courses:Object.keys(JOAQUIN_GRADES),grades:{...JOAQUIN_GRADES},pending:null,submitted:false,evidence:'',xp:0}],
+  weekly:{}
+};
+let S=load(); let currentKid=S.kids[0].id; let unlocked=false; let pinThen=null;
+let vState={pen:[],pos:[],override:null};
+let simState={grades:{},pen:[],pos:[]};
+let subState={grades:{},evidence:'',bim:'II',kind:'Midterm',pen:[],pos:[]};
+
+function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.kids)return mig(r);}catch(e){}return structuredClone(DEFAULTS);}
+function mig(r){for(const k in DEFAULTS)if(!(k in r))r[k]=structuredClone(DEFAULTS[k]);if(!r.emails)r.emails={papa:'',mama:''};if(!r._pinset){r.pin='cambiar123';r._pinset=true;}r.kids.forEach(k=>{k.grades=k.grades||{};if(!k.courses)k.courses=[...r.courses];if(k.xp==null)k.xp=0;if(k.pending===undefined)k.pending=null;if(!k.gradesPeriod)k.gradesPeriod=null;});return r;}
+function persist(){localStorage.setItem(KEY,JSON.stringify(S));}
+function kidById(id){return S.kids.find(k=>k.id===id);}
+function kid(){return kidById(currentKid);}
+function kidGrades(){return kid().grades||{};}
+function kidCourses(){return kid().courses||S.courses;}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function isWeekendToday(){const d=new Date().getDay();return d===0||d===6;}
+function isFridayToday(){return new Date().getDay()===5;}
+function weekId(date){const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));const wk=Math.ceil((((d-ys)/86400000)+1)/7);return d.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');}
+function curWeek(){return weekId(new Date());}
+
+/* ===== MOTOR ===== */
+function gradeBonus(grades,courses){const v=[];let nA=0,nB=0,nC=0;
+  for(const c of (courses||S.courses)){const g=grades&&grades[c];
+    if(g==='A'){v.push(S.gradePoints.A);nA++;}else if(g==='B'){v.push(S.gradePoints.B);nB++;}else if(g==='C'){v.push(S.gradePoints.C);nC++;}}
+  if(!v.length)return{pts:0,nA,nB,nC,n:0};
+  const sum=v.reduce((a,b)=>a+b,0);
+  return{pts:S.gradeMode==='suma'?sum:Math.round(sum/v.length),nA,nB,nC,n:v.length};}
+
+function gradeBaseline(grades,courses){const gb=gradeBonus(grades,courses);
+  return{val:Math.max(0,Math.min(S.bases.weekend+gb.pts,S.caps.weekend)),gb};}
+
+function weeklyCalc(grades,courses,pen,pos,override){
+  pen=pen||[];pos=pos||[];
+  const base=gradeBaseline(grades,courses);const baseline=base.val;const gb=base.gb;
+  let penPts=0;for(const p of S.penalties)if(pen.includes(p.id))penPts+=p.pts;
+  let posPts=0,capBonus=0;for(const p of S.positives)if(pos.includes(p.id)){posPts+=p.pts;capBonus+=(p.cap||0);}
+  const normalCap=S.caps.weekend;const rewardMax=S.caps.weekendReward??300;
+  const gateOK = pen.length===0 && gb.nC===0 && capBonus>0;
+  let cap=normalCap;if(gateOK)cap=Math.min(rewardMax,normalCap+capBonus);
+  const suggested=Math.max(0,Math.min(baseline+posPts+penPts,cap));
+  const final=override!=null?Math.max(0,Math.min(override,cap)):suggested;
+  return{baseline,penPts,posPts,capBonus,gb,normalCap,cap,suggested,final,rewardOn:final>normalCap,gateOK};}
+
+/* ===== GAMIFICACIÓN ===== */
+function weeksOf(id){return S.weekly[id]||{};}
+function weekStreak(id){const w=weeksOf(id);const ks=Object.keys(w).sort();let s=0;for(let i=ks.length-1;i>=0;i--){if((w[ks[i]].pen||[]).length===0)s++;else break;}return s;}
+function countPos(id,pid){const w=weeksOf(id);return Object.values(w).filter(r=>(r.pos||[]).includes(pid)).length;}
+function levelOf(id){const xp=kidById(id).xp||0;return{level:1+Math.floor(xp/150),inLevel:xp%150,need:150};}
+function badgesOf(id){const k=kidById(id);const w=weeksOf(id);const last=Object.keys(w).sort().slice(-4).map(d=>w[d]);
+  const st=weekStreak(id);const gb=gradeBonus(k.grades,k.courses);const lvl=levelOf(id).level;
+  const cleanResp=last.length>0&&last.every(r=>!(r.pen||[]).includes('respeto')&&!(r.pen||[]).includes('conducta'));
+  return[
+    {ico:'🔥',name:'Racha x3',on:st>=3},
+    {ico:'⚡',name:'Racha x7',on:st>=7},
+    {ico:'🌟',name:'Sobresaliente',on:gb.n>0&&gb.pts>=Math.round(S.gradePoints.A*0.85)},
+    {ico:'🤝',name:'Respeto',on:cleanResp},
+    {ico:'🏠',name:'Colaborador',on:countPos(id,'colab')>=3},
+    {ico:'📞',name:'Familia',on:countPos(id,'familia')>=3},
+    {ico:'⚽',name:'Extracurricular',on:countPos(id,'extra')>=3},
+    {ico:'👑',name:'Nivel 5',on:lvl>=5}];}
+
+/* ===== HELPERS UI ===== */
+function $(s){return document.querySelector(s);}
+function el(t,c,h){const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+function fmt(n){return(n>0?'+':'')+n;}
+function countUp(node,to){let t=0;const step=Math.max(1,Math.round(to/22));clearInterval(node._iv);node._iv=setInterval(()=>{t+=step;if(t>=to){t=to;clearInterval(node._iv);}node.textContent=t;},22);}
+function confetti(){const cols=['#FFC83D','#37E1A0','#9A7BFF','#FF6B8A','#39D3FF'];for(let i=0;i<46;i++){const s=el('div','confetti');s.style.left=Math.random()*100+'vw';s.style.background=cols[i%cols.length];s.style.animationDelay=(Math.random()*0.3)+'s';s.style.transform='rotate('+(Math.random()*360)+'deg)';document.body.appendChild(s);setTimeout(()=>s.remove(),2200);}}
+function setBattery(b,a,cap){const pct=cap>0?(a/cap*100):0;b.querySelector('.fill').style.width=Math.max(0,Math.min(100,pct))+'%';b.classList.toggle('full',cap>0&&a>=cap);}
+function renderToggles(c,items,arr,kind,onChange){c.innerHTML='';items.forEach(it=>{const on=arr.includes(it.id);const t=el('div','toggle '+(kind==='bad'?'bad':'good')+(on?' on':''));
+  t.innerHTML=`<div class="box">✓</div><div class="lbl">${it.label}${it.cap>0?' <span class="rk">🚀</span>':''}</div><div class="pts ${it.pts<0?'neg':'pos'}">${fmt(it.pts)}</div>`;
+  t.onclick=()=>{const i=arr.indexOf(it.id);if(i>=0)arr.splice(i,1);else arr.push(it.id);onChange();};c.appendChild(t);});}
+function gradeGrid(container,grades,courses,onChange){container.innerHTML='';(courses||S.courses).forEach(c=>{const row=el('div','subj-row');row.appendChild(el('div','name',c));const grp=el('div','grade-grp');
+  [['A','A'],['B','B'],['C','C'],['-','—']].forEach(([val,lbl])=>{const b=el('button',null,lbl);b.dataset.g=val;if((grades[c]||'-')===val)b.classList.add('sel');b.onclick=()=>{grades[c]=val==='-'?null:val;onChange();};grp.appendChild(b);});
+  row.appendChild(grp);container.appendChild(row);});}
+function gradeSummary(c,grades,courses){c.innerHTML='';const gb=gradeBonus(grades,courses);if(gb.nA)c.appendChild(el('div','gtag A',gb.nA+'× A'));if(gb.nB)c.appendChild(el('div','gtag B',gb.nB+'× B'));if(gb.nC)c.appendChild(el('div','gtag C',gb.nC+'× C'));if(!gb.n)c.appendChild(el('div','sub','Sin notas.'));}
+function moodEmoji(ratio){return ratio>=0.85?'🤩':ratio>=0.5?'😊':ratio>=0.2?'🙂':'😴';}
+function renderBreakdown(c,r){c.innerHTML='';const add=(cls,l,v)=>c.appendChild(el('div','chip '+cls,`${l} <span class="v">${typeof v==='number'?fmt(v):v}</span>`));
+  c.appendChild(el('div','chip base',`Libreta <span class="v">${r.baseline}</span>`));
+  if(r.posPts!==0)add('pos','Conducta+',r.posPts);
+  if(r.penPts!==0)add('neg','Conducta−',r.penPts);
+  if(r.rewardOn)c.appendChild(el('div','chip','🚀 Tope '+r.cap));}
+function coachWeekly(r){
+  if(r.rewardOn)return `🚀 ¡Conducta excepcional! El tope subió a <b>${r.cap} min</b>. ¡Increíble semana!`;
+  if(r.penPts<0)return `La conducta resta <b>${Math.abs(r.penPts)} min</b>. Una buena semana lo recupera. 💪`;
+  if(r.gb.nC===0)return `Suma conducta positiva (colaborar, extracurriculares, llamar a los abuelos, buen trato) y mantén o sube ¡hasta 5 h! 🌟`;
+  return `Tu tiempo base sale de tus notas. Una buena conducta lo mantiene. 🙂`;}
+
+/* ===== TABS + PIN ===== */
+const PROTECTED=['viernes','ajustes'];
+function showTab(name){document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));$('#tab-'+name).classList.add('active');
+  if(name==='hoy')renderHoy();if(name==='subir')renderSubir();if(name==='sim')renderSim();
+  if(name==='viernes')renderViernes();if(name==='hist')renderHistory();if(name==='ajustes')renderAjustes();}
+document.querySelectorAll('nav.tabs button').forEach(b=>{b.onclick=()=>{const name=b.dataset.tab;
+  if(PROTECTED.includes(name)&&!unlocked){pinThen=()=>showTab(name);openPin();return;}showTab(name);};});
+function openPin(){$('#pinErr').textContent='';$('#pinInput').value='';$('#pinOverlay').classList.add('show');setTimeout(()=>$('#pinInput').focus(),50);}
+function closePin(){$('#pinOverlay').classList.remove('show');}
+$('#pinOk').onclick=()=>{if($('#pinInput').value===String(S.pin)){unlocked=true;closePin();updateLockBtn();
+  document.querySelectorAll('#vLocked,#ajLocked').forEach(e=>e.style.display='none');$('#vContent').style.display='';$('#ajContent').style.display='';
+  if(pinThen){pinThen();pinThen=null;}}else $('#pinErr').textContent='Clave incorrecta';};
+$('#pinCancel').onclick=()=>{closePin();pinThen=null;};
+$('#pinInput').onkeydown=e=>{if(e.key==='Enter')$('#pinOk').click();};
+$('#lockBtn').onclick=()=>{if(unlocked){unlocked=false;updateLockBtn();document.querySelectorAll('#vLocked,#ajLocked').forEach(e=>e.style.display='');$('#vContent').style.display='none';$('#ajContent').style.display='none';if(['viernes','ajustes'].includes(curTab()))showTab('hoy');}else openPin();};
+function curTab(){const a=document.querySelector('nav.tabs button.active');return a?a.dataset.tab:'hoy';}
+function updateLockBtn(){const b=$('#lockBtn');b.textContent=unlocked?'🔓 Bloquear':'🔒 Modo padres';b.classList.toggle('open',unlocked);}
+
+/* ===== KID SELECTOR ===== */
+function renderKidSelector(){const c=$('#kidSelector');c.innerHTML='';S.kids.forEach(k=>{const p=el('div','kid-pill'+(k.id===currentKid?' active':''));
+  const ini=k.name.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]/g,'').trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'•';
+  p.innerHTML=`<div class="av" style="background:${k.color}">${ini}</div>${k.name}`;
+  p.onclick=()=>{currentKid=k.id;simState.grades={...kidGrades()};subState.grades={...(kid().pending||kidGrades())};renderKidSelector();showTab(curTab());};c.appendChild(p);});}
+
+/* ===== HOY ===== */
+function renderHoy(){const k=kid();$('#hoyGreet').textContent='¡Hola, '+k.name.replace(/\s*\(.*\)/,'')+'! 👋';
+  const lv=levelOf(currentKid);$('#hoyLevel').textContent=lv.level;$('#hoyXp').style.width=(lv.inLevel/lv.need*100)+'%';
+  $('#hoyStreak').textContent=weekStreak(currentKid)+' 🔥';
+  const gb=gradeBonus(k.grades,k.courses);$('#hoyGrade').textContent=gb.n?(gb.nA+'A·'+gb.nB+'B'+(gb.nC?'·'+gb.nC+'C':'')):'–';
+  const bc=$('#hoyBadges');bc.innerHTML='';badgesOf(currentKid).forEach(b=>bc.appendChild(el('div','badge'+(b.on?' on':''),`<div class="bi">${b.ico}</div><div class="bn">${b.name}</div>`)));
+  if(!isWeekendToday()){
+    countUp($('#hoyMin'),0);$('#hoyMascot').textContent='📵';$('#hoyDay').textContent='Día de colegio';
+    $('#hoyCapNote').innerHTML='📵 <b>Día de colegio</b>: el tiempo de pantalla es <b>0</b>.';
+    setBattery($('#hoyBat'),0,1);$('#hoyBreak').innerHTML='';$('#hoyReward').innerHTML='';
+    $('#hoyCoachTxt').innerHTML=isFridayToday()?'📅 Es <b>viernes</b>: papá/mamá deben hacer la <b>evaluación semanal</b> para definir el finde.':'Día de cole, a darle al estudio. ¡El finde se gana! 💪';
+    return;}
+  const wk=(S.weekly[currentKid]||{})[curWeek()];
+  let r,evaluated=!!wk;
+  if(wk)r=weeklyCalc(k.grades,k.courses,wk.pen,wk.pos,wk.final);
+  else r=weeklyCalc(k.grades,k.courses,[],[],null);
+  countUp($('#hoyMin'),r.final);$('#hoyMascot').textContent=r.rewardOn?'🚀':moodEmoji(r.final/r.cap);
+  $('#hoyDay').textContent='Fin de semana'+(evaluated?' · evaluado ✓':' · provisional');
+  setBattery($('#hoyBat'),r.final,r.cap);renderBreakdown($('#hoyBreak'),r);
+  $('#hoyCapNote').innerHTML=r.rewardOn?('🚀 <b style="color:var(--coin)">Modo Recompensa</b> · tope '+r.cap+' min'):('Tope de la semana: <b>'+r.cap+'</b> min');
+  $('#hoyReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 ¡Modo Recompensa!</div>':(evaluated?'':'<div class="status none">Provisional · falta la evaluación del viernes</div>');
+  $('#hoyCoachTxt').innerHTML=evaluated?coachWeekly(r):'Este es tu tiempo base por notas. Tus papás lo confirmarán el viernes según tu conducta.';}
+
+/* ===== SUBIR NOTAS ===== */
+function renderSubir(){const k=kid();gradeGrid($('#subGrades'),subState.grades,k.courses,renderSubir);
+  renderToggles($('#subPos'),S.positives,subState.pos,'good',renderSubir);renderToggles($('#subPen'),S.penalties,subState.pen,'bad',renderSubir);
+  $('#subBim').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.b===subState.bim));
+  $('#subKind').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.k===subState.kind));
+  const b=gradeBaseline(subState.grades,k.courses);countUp($('#subMin'),b.val);
+  const st=$('#subStatus');st.innerHTML='';
+  if(k.submitted&&k.pending)st.appendChild(el('div','status wait','⏳ Enviado a la app · esperando aprobación'));
+  else if(k.gradesPeriod)st.appendChild(el('div','status ok','✓ Notas vigentes: Bim '+k.gradesPeriod.bim+' · '+k.gradesPeriod.kind));
+  else st.appendChild(el('div','status none','Aún no enviado'));
+  $('#subPreview').innerHTML=subState.evidence?`<div class="status ok">📎 ${subState.evidence}</div>`:'';}
+$('#subBim').querySelectorAll('button').forEach(b=>b.onclick=()=>{subState.bim=b.dataset.b;renderSubir();});
+$('#subKind').querySelectorAll('button').forEach(b=>b.onclick=()=>{subState.kind=b.dataset.k;renderSubir();});
+function selfEvalText(){const k=kid();const g=subState.grades;const gb=gradeBonus(g,k.courses);const b=gradeBaseline(g,k.courses);const L=[];
+  L.push('Autoevaluación de '+k.name);L.push('Periodo: Bimestre '+subState.bim+' · '+subState.kind);L.push('Fecha: '+todayStr());L.push('');
+  L.push('— CALIFICACIONES —');k.courses.forEach(c=>{if(g[c])L.push('• '+c+': '+g[c]);});
+  L.push('Resumen: '+gb.nA+'x A, '+gb.nB+'x B, '+gb.nC+'x C');L.push('Tiempo base estimado del finde: '+b.val+' min');L.push('');
+  L.push('— MI CONDUCTA (autoevaluación) —');
+  const pos=S.positives.filter(p=>subState.pos.includes(p.id)).map(p=>p.label);
+  const pen=S.penalties.filter(p=>subState.pen.includes(p.id)).map(p=>p.label);
+  L.push('Lo que hice bien: '+(pos.length?pos.join(', '):'—'));L.push('A mejorar: '+(pen.length?pen.join(', '):'—'));
+  if(subState.evidence){L.push('');L.push('Adjunto la foto de la libreta: '+subState.evidence+' (recuerda adjuntarla en el correo).');}
+  L.push('');L.push('Enviado desde Banco de Tiempo.');return L.join(String.fromCharCode(10));}
+function sendMail(to){const subject='Autoevaluación — '+kid().name+' — Bim '+subState.bim+' '+subState.kind;
+  window.location.href='mailto:'+to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(selfEvalText());}
+$('#subMailPapa').onclick=()=>sendMail(S.emails.papa);
+$('#subMailMama').onclick=()=>sendMail(S.emails.mama);
+$('#subMailBoth').onclick=()=>sendMail(S.emails.papa+','+S.emails.mama);
+$('#subFile').onchange=e=>{const f=e.target.files[0];if(!f)return;subState.evidence=f.name;const pv=$('#subPreview');
+  if(f.type.startsWith('image/')){const u=URL.createObjectURL(f);pv.innerHTML=`<img src="${u}" style="max-width:100%;border-radius:12px;border:1px solid var(--line)"><div class="status ok" style="margin-top:8px">📎 ${f.name}</div>`;}else pv.innerHTML=`<div class="status ok">📎 ${f.name}</div>`;};
+$('#subSend').onclick=()=>{const k=kid();k.pending={...subState.grades};k.pendingPeriod={bim:subState.bim,kind:subState.kind};k.submitted=true;k.evidence=subState.evidence||'';persist();confetti();renderSubir();
+  const st=$('#subStatus');st.innerHTML='';st.appendChild(el('div','status ok','🎉 ¡Enviado! Tus papás lo revisarán.'));};
+
+/* ===== LABORATORIO ===== */
+function renderSim(){gradeGrid($('#simGrades'),simState.grades,kidCourses(),renderSim);
+  renderToggles($('#simPen'),S.penalties,simState.pen,'bad',renderSim);renderToggles($('#simPos'),S.positives,simState.pos,'good',renderSim);
+  const r=weeklyCalc(simState.grades,kidCourses(),simState.pen,simState.pos,null);
+  countUp($('#simMin'),r.final);setBattery($('#simBat'),r.final,r.cap);renderBreakdown($('#simBreak'),r);$('#simCoach').innerHTML=coachWeekly(r);}
+$('#simResetGrades').onclick=()=>{simState.grades={...kidGrades()};renderSim();};
+
+/* ===== EVALUACIÓN VIERNES ===== */
+function renderApprove(){const k=kid();const card=$('#vApproveCard');const ap=$('#vApprove');
+  if(!k.pending){card.style.display='none';return;}
+  card.style.display='';ap.innerHTML='';
+  const per=k.pendingPeriod?('Bim '+k.pendingPeriod.bim+' · '+k.pendingPeriod.kind):'';
+  ap.appendChild(el('p','sub',k.name+' envió notas '+per+(k.evidence?' · 📎 '+k.evidence:'')+'. Revisa, ajusta si hace falta y aprueba.'));
+  const grid=el('div');ap.appendChild(grid);gradeGrid(grid,k.pending,k.courses,()=>{persist();});
+  const row=el('div','btn-row');
+  const ok=el('button','btn good','✅ Aprobar como oficial');ok.onclick=()=>{k.grades={...k.pending};k.gradesPeriod=k.pendingPeriod||k.gradesPeriod;k.pending=null;k.submitted=false;persist();confetti();renderViernes();renderHoy();};
+  const no=el('button','btn ghost','Rechazar');no.onclick=()=>{k.pending=null;k.submitted=false;persist();renderApprove();};
+  row.appendChild(ok);row.appendChild(no);ap.appendChild(row);}
+function renderViernes(){if(!unlocked)return;const k=kid();renderApprove();const wkk=curWeek();const rec=(S.weekly[currentKid]||{})[wkk];
+  vState=rec?{pen:[...rec.pen],pos:[...rec.pos],override:rec.final}:{pen:[],pos:[],override:null};
+  $('#vTitle').textContent='Semana '+wkk;
+  $('#vWeekState').textContent=rec?('Evaluada · '+(rec.friday||'')):'Sin evaluar todavía';
+  renderToggles($('#vPen'),S.penalties,vState.pen,'bad',vRecalc);renderToggles($('#vPos'),S.positives,vState.pos,'good',vRecalc);
+  vRecalc();}
+function vRecalc(){const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,vState.override);
+  $('#vBaseline').textContent=r.baseline;$('#vCap').textContent=r.cap;
+  $('#vKeepN').textContent=r.baseline;$('#vSuggestN').textContent=r.suggested;
+  const sl=$('#vSlider');sl.max=r.cap;sl.value=r.final;$('#vFinal').textContent=r.final;
+  $('#vReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 Conducta excepcional: puedes subir hasta '+r.cap+' min</div>':(r.gateOK?'':'<div class="status none">Para subir el tope: sin faltas, sin C y con conducta positiva destacada</div>');
+  renderBreakdown($('#vBreak'),r);}
+$('#vSlider').oninput=e=>{vState.override=parseInt(e.target.value);$('#vFinal').textContent=e.target.value;
+  const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,vState.override);renderBreakdown($('#vBreak'),r);
+  $('#vReward').innerHTML=r.rewardOn?'<div class="status ok" style="background:#3a2c10;color:var(--coin)">🚀 Modo Recompensa</div>':(r.gateOK?'':'<div class="status none">Para subir el tope: sin faltas, sin C y con conducta positiva destacada</div>');};
+$('#vKeep').onclick=()=>{const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,null);vState.override=r.baseline;vRecalc();};
+$('#vSuggest').onclick=()=>{const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,null);vState.override=r.suggested;vRecalc();};
+$('#vSave').onclick=()=>{const k=kid();const r=weeklyCalc(k.grades,k.courses,vState.pen,vState.pos,vState.override);
+  if(!S.weekly[currentKid])S.weekly[currentKid]={};
+  S.weekly[currentKid][curWeek()]={friday:todayStr(),pen:[...vState.pen],pos:[...vState.pos],final:r.final,baseline:r.baseline,cap:r.cap,rewardOn:r.rewardOn};
+  k.xp=(k.xp||0)+Math.round(r.final/10)+vState.pos.length*5+(vState.pen.length===0?15:0);
+  persist();$('#vFlash').classList.add('show');setTimeout(()=>$('#vFlash').classList.remove('show'),1400);confetti();renderHoy();};
+
+/* ===== HISTORIAL ===== */
+let chart;
+function renderHistory(){const k=kid();$('#histSub').textContent='Tiempo de finde por semana · '+k.name;
+  const w=S.weekly[currentKid]||{};const ks=Object.keys(w).sort().slice(-10);const data=ks.map(x=>w[x].final);
+  if(chart)chart.destroy();chart=new Chart($('#histChart'),{type:'bar',data:{labels:ks,datasets:[{data,backgroundColor:k.color+'dd',borderRadius:8}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'#43367a55'},ticks:{color:'#AFA4DA'}},x:{grid:{display:false},ticks:{color:'#AFA4DA'}}}}});
+  const list=$('#histList');list.innerHTML='';if(!ks.length){list.innerHTML='<p class="sub">Sin semanas evaluadas aún.</p>';return;}
+  ks.slice().reverse().forEach(x=>{const rc=w[x];const row=el('div','subj-row');
+    row.innerHTML=`<div class="name">${x} <span style="color:var(--muted);font-weight:500">· ${rc.friday||''}${rc.rewardOn?' · 🚀':''}</span></div><div style="font-family:var(--mono);font-weight:700;color:var(--good)">${rc.final} min</div>`;list.appendChild(row);});}
+
+/* ===== AJUSTES ===== */
+function renderAjustes(){if(!unlocked)return;renderSettings();}
+function renderSettings(){
+  $('#cfg_base_we').value=S.bases.weekend;$('#cfg_cap_we').value=S.caps.weekend;$('#cfg_rcap_we').value=S.caps.weekendReward;
+  $('#cfg_gA').value=S.gradePoints.A;$('#cfg_gB').value=S.gradePoints.B;$('#cfg_gC').value=S.gradePoints.C;$('#cfg_pin').value=S.pin;
+  $('#cfg_mail_papa').value=S.emails.papa;$('#cfg_mail_mama').value=S.emails.mama;
+  $('#cfg_mode').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.m===S.gradeMode));
+  const kc=kid().courses;$('#cfgCoursesTitle').textContent='Cursos de '+kid().name;const cc=$('#cfgCourses');cc.innerHTML='';
+  kc.forEach((s,i)=>{const row=el('div','mini');row.innerHTML=`<input type="text" value="${s.replace(/"/g,'&quot;')}">`;row.querySelector('input').oninput=e=>kc[i]=e.target.value;
+    const rm=el('button','rm','×');rm.onclick=()=>{kc.splice(i,1);renderSettings();};row.appendChild(rm);cc.appendChild(row);});
+  renderCfgList('#cfgPen',S.penalties);renderCfgPos();
+  const ck=$('#cfgKids');ck.innerHTML='';S.kids.forEach(k=>{const row=el('div','mini');
+    row.innerHTML=`<input type="text" value="${k.name.replace(/"/g,'&quot;')}"><input type="color" value="${k.color}" style="width:46px;height:38px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2)">`;
+    const[nm,col]=row.querySelectorAll('input');nm.oninput=e=>k.name=e.target.value;col.oninput=e=>k.color=e.target.value;ck.appendChild(row);});}
+function renderCfgList(sel,arr){const c=$(sel);c.innerHTML='';arr.forEach((it,i)=>{const row=el('div','mini');row.innerHTML=`<input type="text" value="${it.label.replace(/"/g,'&quot;')}"><input type="number" value="${it.pts}">`;
+  const[lbl,pts]=row.querySelectorAll('input');lbl.oninput=e=>it.label=e.target.value;pts.oninput=e=>it.pts=parseInt(e.target.value||0);
+  const rm=el('button','rm','×');rm.onclick=()=>{arr.splice(i,1);renderSettings();};row.appendChild(rm);c.appendChild(row);});}
+function renderCfgPos(){const c=$('#cfgPos');c.innerHTML='';S.positives.forEach((it,i)=>{const row=el('div','mini');
+  row.innerHTML=`<input type="text" value="${it.label.replace(/"/g,'&quot;')}"><input type="number" value="${it.pts}" title="minutos"><input type="number" value="${it.cap||0}" title="sube tope">`;
+  const[lbl,pts,cap]=row.querySelectorAll('input');lbl.oninput=e=>it.label=e.target.value;pts.oninput=e=>it.pts=parseInt(e.target.value||0);cap.oninput=e=>it.cap=parseInt(e.target.value||0);
+  const rm=el('button','rm','×');rm.onclick=()=>{S.positives.splice(i,1);renderSettings();};row.appendChild(rm);c.appendChild(row);});}
+$('#cfg_mode').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.gradeMode=b.dataset.m;$('#cfg_mode').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));});
+$('#addCourse').onclick=()=>{kid().courses.push('Nuevo curso');renderSettings();};
+$('#addPen').onclick=()=>{S.penalties.push({id:'p'+Date.now(),label:'Nuevo ítem',pts:-10});renderSettings();};
+$('#addPos').onclick=()=>{S.positives.push({id:'q'+Date.now(),label:'Nuevo positivo',pts:15,cap:0});renderSettings();};
+$('#cfgSave').onclick=()=>{S.bases.weekend=iv('#cfg_base_we');S.caps.weekend=Math.min(120,iv('#cfg_cap_we'));$('#cfg_cap_we').value=S.caps.weekend;
+  S.caps.weekendReward=Math.min(300,iv('#cfg_rcap_we'));$('#cfg_rcap_we').value=S.caps.weekendReward;
+  S.gradePoints.A=iv('#cfg_gA');S.gradePoints.B=iv('#cfg_gB');S.gradePoints.C=iv('#cfg_gC');const np=$('#cfg_pin').value.trim();if(np)S.pin=np;
+  S.emails.papa=$('#cfg_mail_papa').value.trim()||S.emails.papa;S.emails.mama=$('#cfg_mail_mama').value.trim()||S.emails.mama;
+  persist();$('#cfgFlash').classList.add('show');setTimeout(()=>$('#cfgFlash').classList.remove('show'),1400);renderKidSelector();renderHoy();};
+$('#cfgRestore').onclick=()=>{if(confirm('¿Restaurar ajustes por defecto? Se conservan las semanas evaluadas.')){const w=S.weekly;S=structuredClone(DEFAULTS);S.weekly=w;persist();currentKid=S.kids[0].id;boot();renderSettings();}};
+function iv(s){return parseInt($(s).value||0);}
+
+/* ===== BOOT ===== */
+function boot(){renderKidSelector();simState.grades={...kidGrades()};simState.pen=[];simState.pos=[];subState.grades={...(kid().pending||kidGrades())};subState.pen=[];subState.pos=[];updateLockBtn();renderHoy();renderSubir();renderSim();}
+boot();
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});}
+</script>
+</body>
+</html>
